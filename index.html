@@ -49,6 +49,7 @@
   .notice { text-align: center; color: var(--muted); font-size: 12px; }
   .msg { display: flex; gap: 10px; align-items: flex-start; min-width: 0; }
   .msg.user { flex-direction: row-reverse; }
+  img.avatar { object-fit: cover; }
   .avatar {
     width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
     background: linear-gradient(135deg, #4a3b5c, #1d1a26);
@@ -62,6 +63,10 @@
   }
   .msg.user .bubble { background: var(--user-bubble); }
   .bubble em { color: var(--muted); font-style: italic; }
+  .bubble p { margin: 0; }
+  .bubble p + p { margin-top: 10px; }
+  .bubble .say { color: var(--text); border-left: 2px solid var(--accent); padding-left: 10px; }
+  .bubble .nar { color: var(--muted); }
   .choices { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
   .chip {
     background: none; color: var(--text);
@@ -128,9 +133,38 @@
     return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
-  // *italic* segments become <em>, everything else is plain speech.
-  function formatBot(text) {
-    return esc(text).replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  // *italic* marks narration. Quoted text is dialogue and gets its own line.
+  function narrationHTML(s) {
+    return s.split(/\*([^*]+)\*/).map((part, i) => i % 2 ? '<em>' + esc(part) + '</em>' : esc(part)).join('');
+  }
+
+  // Avatars for named characters. Others get the default circle.
+  const AVATARS = { Eve: 'avatars/eve.png', Lily: 'avatars/lily.png' };
+
+  function avatarHTML(name) {
+    return AVATARS[name]
+      ? '<img class="avatar" src="' + AVATARS[name] + '" alt="' + esc(name) + '">'
+      : '<div class="avatar"></div>';
+  }
+
+  // Each paragraph becomes its own message: a named line gets that character's avatar and name,
+  // and narration (no name in front) is a plain bubble.
+  function renderBotTurn(text) {
+    text.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean).forEach(p => {
+      const m = p.match(/^([\p{L}]+(?: [\p{L}]+)?):\s*([\s\S]*)$/u);
+      if (m && /^["“]/.test(m[2])) {
+        const wrap = document.createElement('div');
+        wrap.className = 'msg bot';
+        wrap.innerHTML = avatarHTML(m[1]) + '<div class="content"><div class="name">' + esc(m[1]) + '</div><div class="bubble say">' + esc(m[2]) + '</div></div>';
+        messagesEl.appendChild(wrap);
+      } else {
+        const wrap = document.createElement('div');
+        wrap.className = 'msg bot narr';
+        wrap.innerHTML = '<div class="content"><div class="bubble">' + narrationHTML(p) + '</div></div>';
+        messagesEl.appendChild(wrap);
+      }
+    });
+    messagesEl.scrollTop = messagesEl.scrollHeight;
   }
 
   function addMessage(role, html, name) {
@@ -208,7 +242,7 @@
       status.remove();
       const parsed = parseReply(data.text);
       history.push({ role: 'assistant', content: data.text });
-      addMessage('bot', formatBot(parsed.story), 'Lost love');
+      renderBotTurn(parsed.story);
       // Always offer "let AI continue" so the reader can skip typing after any turn.
       showOptions(parsed.options.concat(['Để AI viết tiếp']));
     } catch (err) {

@@ -22,7 +22,8 @@ Characters:
 
 Rules:
 - Write only the next beat, as one or two full paragraphs (about 80 to 150 words in total). Do not stop after one or two lines.
-- Narration goes in *italics* and spoken lines in plain text. Use concrete sensory detail (the music, the lights, body language, the tension at the table) and let characters say things with subtext, not just explain feelings.
+- Narration goes in *italics*, in its own paragraph with no name in front.
+- Every spoken line goes in its own paragraph that starts with the speaker's name and a colon, then the line in double quotation marks. Example: Eve: "..." . Use the names Eve, Lily, Brad, Luke or Ray exactly. Use concrete sensory detail (the music, the lights, body language, the tension at the table) and let characters say things with subtext, not just explain feelings.
 - Zenith is never written as chatty. He speaks rarely, coldly and precisely, with dry, sharp wit, and he is never clumsy or overly emotional. Other characters react to him with their own agendas: Brad is possessive and tries to posture, Lily is teasing and perceptive, Eve is guarded and avoids eye contact, Luke keeps the game moving.
 - Keep the plot moving with small, specific events (a card played, a glance held too long, a remark that lands wrong), so each beat gives the reader something new to react to.
 - Stay in character. Never break the fourth wall or mention being an AI.
@@ -107,6 +108,15 @@ const server = http.createServer(async (req, res) => {
     return fs.readFile(file, (err, buf) => {
       if (err) return send(res, 500, 'Missing page', 'text/plain');
       send(res, 200, buf, 'text/html; charset=utf-8');
+    });
+  }
+
+  // Character avatars. basename() blocks any path tricks.
+  if (req.method === 'GET' && url.pathname.startsWith('/avatars/')) {
+    const file = path.join(__dirname, 'avatars', path.basename(url.pathname));
+    return fs.readFile(file, (err, buf) => {
+      if (err) return send(res, 404, 'Not found', 'text/plain');
+      send(res, 200, buf, 'image/png');
     });
   }
 
