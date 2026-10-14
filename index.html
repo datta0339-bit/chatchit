@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chloe</title>
+<title>Lost love</title>
 <style>
   :root {
     --bg: #ffffff; --bubble: #f1f1f4; --text: #111111; --muted: #6b6b75;
@@ -94,7 +94,7 @@
 <div class="app">
   <header>
     <button type="button" aria-label="Quay lại">&#8249;</button>
-    <span class="title">Chloe</span>
+    <span class="title">Lost love</span>
     <span class="pill">zeta</span>
     <button type="button" id="reset" aria-label="Làm mới chat">&#8635;</button>
   </header>
@@ -110,9 +110,9 @@
 </div>
 
 <script>
-  const OPENING = "You were walking home late at night and you passed Chloe's apartment, but you didn't think much of it.";
-  const OPENING_2 = "Until she popped up right in front of you.";
-  const OPENING_SPEECH = "Gotcha! Shh... You're okay... calm down...";
+  const OPENING = "Một năm đã trôi qua kể từ khi mọi chuyện kết thúc giữa Eve và Guest. Ray kéo bạn đến quán bar này trong buổi tụ tập của bạn bè, và bạn chỉ đi vì cậu ấy cứ nói mãi không thôi.";
+  const OPENING_2 = "Bên kia phòng, một cô gái điềm tĩnh với mái tóc bạc trắng dài đang ngồi cạnh một người bạn tóc hồng. Trong thoáng chốc, đôi mắt vàng của cô ấy chạm vào mắt bạn. Rồi cô ấy quay đi.";
+  const OPENING_SPEECH = "Một người đàn ông to con, dáng như cầu thủ bóng bầu dục, ngồi xuống cạnh cô ấy và hôn lên má cô. Anh ta nhìn bạn như đang đánh giá.";
 
   const messagesEl = document.getElementById('messages');
   const form = document.getElementById('form');
@@ -195,7 +195,7 @@
       history.push({ role: 'user', content: '(The reader is waiting. Continue the story.)' });
     }
 
-    const status = addMessage('bot', '<span class="status">...</span>', 'Chloe');
+    const status = addMessage('bot', '<span class="status">...</span>', 'Lost love');
     setBusy(true);
     try {
       const res = await fetch('/api/next', {
@@ -208,8 +208,9 @@
       status.remove();
       const parsed = parseReply(data.text);
       history.push({ role: 'assistant', content: data.text });
-      addMessage('bot', formatBot(parsed.story), 'Chloe');
-      showOptions(parsed.options);
+      addMessage('bot', formatBot(parsed.story), 'Lost love');
+      // Always offer "let AI continue" so the reader can skip typing after any turn.
+      showOptions(parsed.options.concat(['Để AI viết tiếp']));
     } catch (err) {
       status.querySelector('.bubble').innerHTML = '<span class="status">' + esc(err.message) + '</span>';
       // Drop the unanswered turn so the next try starts clean.
@@ -238,10 +239,10 @@
 
   function startChat() {
     const opening = OPENING + ' ' + OPENING_2 + ' ' + OPENING_SPEECH;
-    addMessage('bot', '<em>' + esc(OPENING) + '</em> <em>' + esc(OPENING_2) + '</em> ' + esc(OPENING_SPEECH), 'Chloe');
+    addMessage('bot', '<em>' + esc(OPENING) + '</em> <em>' + esc(OPENING_2) + '</em> ' + esc(OPENING_SPEECH), 'Lost love');
     // Seed the server-side history with the opening so the model knows what the reader has seen.
     history.push({ role: 'assistant', content: opening });
-    showOptions(['Hỏi cô ấy muốn gì', 'Đẩy cô ấy ra', 'Để AI viết tiếp']);
+    showOptions(['Đi về phía Eve', 'Ngồi vào bàn chơi bài', 'Để AI viết tiếp']);
   }
 
   // The last option is a special case: it just asks the model to continue without a typed line.
