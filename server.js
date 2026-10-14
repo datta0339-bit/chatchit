@@ -72,7 +72,7 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
 
   if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) {
-    const file = path.join(__dirname, 'public', 'index.html');
+    const file = path.join(__dirname, 'index.html');
     return fs.readFile(file, (err, buf) => {
       if (err) return send(res, 500, 'Missing page', 'text/plain');
       send(res, 200, buf, 'text/html; charset=utf-8');
