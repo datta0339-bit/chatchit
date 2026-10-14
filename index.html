@@ -251,6 +251,7 @@
       history.pop();
     } finally {
       setBusy(false);
+      save();
     }
   }
 
@@ -265,19 +266,59 @@
     sendTurn(text);
   });
 
-  resetBtn.addEventListener('click', () => {
-    history = [];
-    messagesEl.querySelectorAll('.msg, .choices').forEach(n => n.remove());
-    startChat();
-  });
+  // The chat is saved in this browser so it survives closing the tab. Each device keeps its own copy.
+  const STORE_KEY = 'chatchit-history';
+  const PLACEHOLDER = '(The reader is waiting. Continue the story.)';
+  const DEFAULT_OPTIONS = ['Đi về phía Eve', 'Ngồi vào bàn chơi bài', 'Để AI viết tiếp'];
+
+  function save() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(history)); } catch (e) { /* storage may be blocked */ }
+  }
+
+  function loadSaved() {
+    try {
+      const v = JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
+      return Array.isArray(v) ? v : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function openingText() {
+    return '*' + OPENING + '*\n\n*' + OPENING_2 + '*\n\n' + OPENING_SPEECH;
+  }
 
   function startChat() {
-    const opening = OPENING + ' ' + OPENING_2 + ' ' + OPENING_SPEECH;
-    addMessage('bot', '<em>' + esc(OPENING) + '</em> <em>' + esc(OPENING_2) + '</em> ' + esc(OPENING_SPEECH), 'Lost love');
-    // Seed the server-side history with the opening so the model knows what the reader has seen.
-    history.push({ role: 'assistant', content: opening });
-    showOptions(['Đi về phía Eve', 'Ngồi vào bàn chơi bài', 'Để AI viết tiếp']);
+    messagesEl.querySelectorAll('.msg, .choices').forEach(n => n.remove());
+    history = [{ role: 'assistant', content: openingText() }];
+    renderBotTurn(openingText());
+    showOptions(DEFAULT_OPTIONS);
+    save();
   }
+
+  // Rebuilds the screen from the saved history, without calling the AI again.
+  function restoreChat(saved) {
+    messagesEl.querySelectorAll('.msg, .choices').forEach(n => n.remove());
+    history = saved;
+    saved.forEach(m => {
+      if (m.role === 'user') {
+        if (m.content !== PLACEHOLDER) addMessage('user', esc(m.content));
+      } else {
+        renderBotTurn(parseReply(m.content).story);
+      }
+    });
+    const last = saved[saved.length - 1];
+    if (last && last.role === 'assistant') {
+      showOptions(parseReply(last.content).options.concat(['Để AI viết tiếp']));
+    } else {
+      showOptions(['Để AI viết tiếp']);
+    }
+  }
+
+  resetBtn.addEventListener('click', () => {
+    try { localStorage.removeItem(STORE_KEY); } catch (e) { /* ignore */ }
+    startChat();
+  });
 
   // The last option is a special case: it just asks the model to continue without a typed line.
   document.addEventListener('click', e => {
@@ -289,7 +330,8 @@
     }
   }, true);
 
-  startChat();
+  const saved = loadSaved();
+  if (saved.length) restoreChat(saved); else startChat();
   updateSendState();
 </script>
 </body>
