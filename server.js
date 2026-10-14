@@ -23,7 +23,7 @@ const MAX_BODY = 64 * 1024;
 
 function send(res, status, body, type = 'application/json') {
   res.writeHead(status, { 'Content-Type': type });
-  res.end(typeof body === 'string' ? body : JSON.stringify(body));
+  res.end(typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body));
 }
 
 function readBody(req) {
